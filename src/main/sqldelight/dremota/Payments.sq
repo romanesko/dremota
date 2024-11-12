@@ -1,0 +1,29 @@
+CREATE TABLE IF NOT EXISTS Payment (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    currency TEXT NOT NULL,
+    invoice_payload TEXT,
+    provider_payment_charge_id TEXT,
+    telegram_payment_charge_id TEXT
+);
+
+
+
+selectAll:
+SELECT * FROM Payment ORDER BY created_at DESC;
+
+selectById:
+SELECT * FROM Payment WHERE id = ?;
+
+selectForChatId:
+SELECT * FROM Payment WHERE chat_id = ? ORDER BY created_at DESC;
+
+insert{
+INSERT OR IGNORE INTO Payment(chat_id,created_at,amount,currency, invoice_payload,provider_payment_charge_id, telegram_payment_charge_id) VALUES (?,strftime('%Y-%m-%d %H:%M:%S','now'),?,?,?,?,?);
+SELECT last_insert_rowid();
+}
+
+paymentsTotalForUser:
+SELECT currency,SUM(amount)AS amount FROM Payment WHERE chat_id = ? GROUP BY currency;

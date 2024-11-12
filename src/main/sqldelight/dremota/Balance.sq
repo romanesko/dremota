@@ -1,0 +1,16 @@
+CREATE TABLE Balance (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    chat_id INTEGER NOT NULL,
+    created_at TEXT NOT NULL,
+    days INTEGER NOT NULL,
+    due TEXT,
+    payment INTEGER,
+    rationale TEXT
+);
+
+insert:
+INSERT INTO Balance(chat_id,created_at,days,due, payment,rationale) VALUES (?,strftime('%Y-%m-%d %H:%M:%S','now'),?,?,?,?);
+
+selectForChatId:
+SELECT * FROM Balance WHERE chat_id = ? ORDER BY created_at DESC;
+

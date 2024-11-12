@@ -1,0 +1,26 @@
+CREATE TABLE IF NOT EXISTS Auth (
+chat_id INTEGER PRIMARY KEY NOT NULL,
+token TEXT NOT NULL,
+role TEXT NOT NULL
+);
+
+
+selectByToken:
+SELECT * FROM Auth WHERE token = ?;
+
+
+selectByChatId:
+SELECT * FROM Auth WHERE chat_id = ?;
+
+insert:
+INSERT OR IGNORE INTO Auth(chat_id,token,role) VALUES ?;
+
+deleteById:
+DELETE FROM Auth WHERE chat_id = ?;
+
+updateRole:
+UPDATE Auth SET role = :role WHERE chat_id = :chat_id;
+
+updateToken:
+UPDATE Auth SET token = :token WHERE chat_id = :chat_id;
+

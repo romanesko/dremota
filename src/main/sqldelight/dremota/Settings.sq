@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS Settings (
+    key TEXT NOT NULL PRIMARY KEY,
+    val_txt TEXT NOT NULL
+);
+
+
+selectValueByKey:
+SELECT val_txt FROM Settings WHERE key = ?;
+
+
+insertIfNotExists:
+INSERT OR IGNORE INTO Settings(key,val_txt) VALUES (?,?);
+
+upsert:
+INSERT OR REPLACE INTO Settings(key,val_txt) VALUES (?,?);
+
+selectWhereKeyIn:
+SELECT * FROM Settings WHERE key IN ?;
+

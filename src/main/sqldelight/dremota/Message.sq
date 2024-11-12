@@ -1,0 +1,19 @@
+CREATE TABLE Message (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+insert:
+INSERT INTO Message(sender_id, receiver_id, message) VALUES (?,?,?);
+
+selectAll:
+SELECT * FROM Message ORDER BY created_at DESC;
+
+selectAllBySenderId:
+SELECT * FROM Message WHERE sender_id = ? ORDER BY created_at ASC;
+
+selectAllByReceiverId:
+SELECT * FROM Message WHERE receiver_id = ? ORDER BY created_at ASC;

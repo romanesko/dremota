@@ -1,0 +1,29 @@
+CREATE TABLE Price (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    amount INTEGER NOT NULL,
+    currency TEXT NOT NULL,
+    days INTEGER NOT NULL,
+    enabled INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+count:
+SELECT COUNT(*) FROM Price;
+
+insert:
+INSERT INTO Price (title, amount, currency, days, enabled) VALUES (?, ?, ?, ?, ?);
+
+selectAll:
+SELECT * FROM Price ORDER BY id;
+
+selectEnabled:
+SELECT * FROM Price WHERE enabled = 1 AND days > 0 ORDER BY id;
+
+
+upsert:
+INSERT OR REPLACE INTO Price (id, title, amount, currency, days, enabled) VALUES (?, ?, ?, ?, ?,?);
+
+delete:
+DELETE FROM Price WHERE id = ?;

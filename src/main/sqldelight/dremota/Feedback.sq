@@ -1,0 +1,22 @@
+CREATE TABLE Feedback (
+    id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    read INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+insert:
+INSERT INTO Feedback(user_id, message) VALUES (?, ?);
+
+selectAll:
+SELECT * FROM Feedback ORDER BY created_at  DESC;
+
+selectAllByUserId:
+SELECT * FROM Feedback WHERE user_id = ? ORDER BY created_at ASC;
+
+usersWithUnread:
+SELECT user_id FROM Feedback WHERE read = 0;
+
+markAsRead:
+UPDATE Feedback SET read = 1 WHERE id = ? AND read = 0;

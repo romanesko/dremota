@@ -1,0 +1,47 @@
+CREATE TABLE IF NOT EXISTS User (
+chat_id INTEGER PRIMARY KEY NOT NULL,
+username TEXT,
+first_name TEXT,
+last_name TEXT,
+photo_url TEXT,
+last_visit TEXT NOT NULL,
+paid_until TEXT,
+referral TEXT NOT NULL,
+created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+invited_by INTEGER
+);
+
+
+
+selectAll:
+SELECT *  FROM User u ORDER BY  EXISTS(SELECT 1 FROM Feedback f WHERE f.user_id = u.chat_id LIMIT 1) DESC, last_visit DESC, paid_until DESC;
+
+selectPaidUntilForUser:
+SELECT paid_until FROM User WHERE chat_id = ?;
+
+updatePaidUntil:
+UPDATE User SET paid_until = :paid_until WHERE chat_id = :chat_id;
+
+
+selectByUsername:
+SELECT * FROM User WHERE username IN ?;
+
+selectById:
+SELECT * FROM User WHERE chat_id = ?;
+
+
+insert:
+INSERT OR IGNORE INTO User(chat_id,username,first_name,last_visit,photo_url,last_visit, invited_by, referral) VALUES ?;
+
+deleteById:
+DELETE FROM User WHERE chat_id = ?;
+
+updateLastVisit:
+UPDATE User SET last_visit = :last_visit WHERE chat_id = :chat_id;
+
+
+selectByReferralCode:
+SELECT * FROM User WHERE referral = ?;
+
+updatePhotoUrl:
+UPDATE User SET photo_url = :photo_url WHERE chat_id = :chat_id;

@@ -1,0 +1,35 @@
+CREATE TABLE Command (
+    key TEXT NOT NULL PRIMARY KEY,
+    description TEXT NOT NULL,
+    type TEXT NOT NULL,
+    message TEXT NOT NULL,
+    post_message TEXT NOT NULL,
+    show_in_menu INTEGER NOT NULL,
+    enabled INTEGER NOT NULL,
+    system INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+
+selectCommands:
+SELECT * FROM Command ORDER BY created_at;
+
+selectActiveCommands:
+SELECT * FROM Command WHERE enabled = 1 ORDER BY created_at;
+
+selectActiveVisibleCommands:
+SELECT * FROM Command WHERE enabled = 1 AND show_in_menu = 1 ORDER BY created_at;
+
+
+insertIfNotExists:
+INSERT OR IGNORE INTO Command (key, description, type, message, post_message, show_in_menu, enabled, system)
+VALUES (?, ?, ?, ?, ?,?,?,?);
+
+update:
+UPDATE Command SET description = :description, message =:message, show_in_menu = :show_in_menu, enabled =:enabled WHERE key = :key;
+
+getCommand:
+SELECT * FROM Command WHERE key = ?;
+
+deleteCommand:
+DELETE FROM Command WHERE key = ?;

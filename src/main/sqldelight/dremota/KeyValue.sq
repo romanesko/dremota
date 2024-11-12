@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS KeyValue (
+    key TEXT NOT NULL PRIMARY KEY,
+    value TEXT NOT NULL,
+    delete_at TEXT NOT NULL
+);
+
+
+upsert:
+INSERT OR REPLACE INTO KeyValue(key,value,delete_at) VALUES (?,?,?);
+
+selectByKey:
+SELECT * FROM KeyValue WHERE key = ?;
+
+deleteByKey:
+DELETE FROM KeyValue WHERE key = ?;
+
+deleteExpired:
+DELETE FROM KeyValue WHERE delete_at < strftime('%s','now');
