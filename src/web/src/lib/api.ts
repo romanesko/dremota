@@ -1,6 +1,6 @@
 import {auth_token, setToken} from "@/store/auth";
 import type {
-  Balance,
+  Balance, BotInfo,
   Command,
   Feedback,
   Message,
@@ -24,18 +24,18 @@ class Api {
     this.token = t
   }
 
-  private async get(url: string): Promise<any> {
-    return this.request(url, 'GET', {})
+  private async get(url: string, useAuth: boolean = true): Promise<any> {
+    return this.request(url, 'GET', {}, useAuth)
   }
 
-  private async post(url: string, params: any): Promise<any> {
-    return this.request(url, 'POST', params)
+  private async post(url: string, params: any, useAuth: boolean = true): Promise<any> {
+    return this.request(url, 'POST', params,useAuth)
   }
-  private async put(url: string, params: any): Promise<any> {
-    return this.request(url, 'PUT', params)
+  private async put(url: string, params: any, useAuth: boolean = true): Promise<any> {
+    return this.request(url, 'PUT', params,useAuth)
   }
 
-  private  async request(url: string, method: 'GET' | 'POST' | 'PUT', params: any) {
+  private  async request(url: string, method: 'GET' | 'POST' | 'PUT', params: any,useAuth: boolean) {
 
     let body = undefined
     if (method === 'POST' || method === 'PUT') {
@@ -47,14 +47,19 @@ class Api {
       const options = {
         method: method,
         headers: {
-          'Authorization': `Bearer ${this.token}`,
           'Content-Type': 'application/json'
         },
         body: body
+      } as any
+
+      let targetUrl = BASE_URL + "/"
+
+      if (useAuth){
+        options.headers['Authorization'] = `Bearer ${this.token}`
+        targetUrl +=  "api/"
       }
 
-
-      const response = await fetch(BASE_URL + "/api/" + url, options);
+      const response = await fetch(targetUrl + url, options);
 
 
       const json = await response.json();
@@ -198,15 +203,28 @@ class Api {
   saveReferral(referral: Referral) {
     return this.post('settings/referral', referral)
   }
+
+  getLoginCode(){
+    return this.post('auth/code', {}, false)
+  }
+
+  checkLoggedIn(data :{code:string}) {
+    return this.post('auth/check',data, false)
+  }
+
+  getBotInfo(): Promise<BotInfo> {
+    return this.get('settings/botInfo')
+  }
 }
+
 
 const api = new Api();
 
-auth_token.subscribe(token => {
-  if (token) {
-    api.setToken(token);
-  }
-});
+// auth_token.subscribe(token => {
+//   if (token) {
+//     api.setToken(token);
+//   }
+// });
 
 
 export default api;

@@ -119,3 +119,8 @@ export interface Referral {
   referrerReceives: number,
   referrerMessage: string,
 }
+
+export interface BotInfo {
+  name: string
+  image: string
+}

@@ -55,7 +55,7 @@ object BotService {
 
             taskScope.launch {
                 delay(2000)
-                client.sendMessage(event.userId, event.message)
+                client.sendMessageToChatId(event.userId, event.message)
             }
 
         }
@@ -88,9 +88,7 @@ object BotService {
         return UsersService.isAdmin(chatId)
     }
 
-    fun setAdmin(chatId: Long) {
-        UsersService.setAdmin(chatId)
-    }
+
 
     fun getSettings(key: String): String? {
         return SettingsService.getSettingsByKey(key)
@@ -121,7 +119,7 @@ object BotService {
         var user = UsersService.getUser(tgUser.id)
         if (user == null) {
             if (!message.hasText() || !message.text.startsWith("/start")) {
-                client.sendMessage(message.from.id, "Начните с команды /start")
+                client.sendMessageToChatId(message.from.id, "Начните с команды /start")
                 throw Exception("User not found")
             }
             user = processStartCommand(message)

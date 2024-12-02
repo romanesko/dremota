@@ -3,6 +3,8 @@ package dremota.service
 import dremota.Settings
 import dremota.lib.EventManager
 import dremota.lib.SettingsChangedEvent
+import dremota.lib.env
+import dremota.models.BotInfoDTO
 import dremota.models.SettingsDTO
 import dremota.plugins.Db
 
@@ -37,6 +39,7 @@ object SettingsService {
         Db.settingsQueries.upsert("prefix", settings.prefix)
         Db.settingsQueries.upsert("context", settings.context)
         Db.settingsQueries.upsert("post", settings.post)
+        Db.settingsQueries.upsert("empty_balance_message", settings.emptyBalanceMessage)
         EventManager.notify(SettingsChangedEvent())
     }
 
@@ -46,6 +49,13 @@ object SettingsService {
 
     fun getSettingsByKey(key: String): String? {
         return Db.settingsQueries.selectValueByKey(key).executeAsOneOrNull()
+    }
+
+    fun getBotInfo(): BotInfoDTO {
+        return BotInfoDTO(
+            System.getenv("BOT_NAME") ?: "",
+            System.getenv("BOT_IMAGE") ?: ""
+        )
     }
 
 

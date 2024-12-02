@@ -1,11 +1,13 @@
 package dremota.lib
 
+
 import java.io.File
 import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.*
 
+const val IMAGES_DIR = "static/images"
 
 object ImageDownloader {
 
@@ -20,7 +22,10 @@ object ImageDownloader {
 
         val filename = UUID.randomUUID().toString() + ".png"
 
-        val fileToSave = File("src/main/resources/images/$filename")
+        val directory = File(IMAGES_DIR)
+        if (!directory.exists()) directory.mkdirs()
+
+        val fileToSave = File("$IMAGES_DIR/$filename")
         fileToSave.writeBytes(imageBytes)
 
         return filename

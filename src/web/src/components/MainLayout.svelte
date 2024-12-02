@@ -2,11 +2,11 @@
   <header class="navbar navbar-expand-sm navbar-light d-print-none">
     <div class="container-xl">
       <h1 class="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
-        <a href="/" style="text-decoration: none;">
-
-          <img alt="DREMOTA" src={logo} style="height: 2.2rem; width: auto"/>
-          DREMOTA
-
+        <a href="/#/" style="text-decoration: none;">
+          {#if botInfo && botInfo.image}
+          <img alt="" src={botInfo?.image} style="height: 2.2rem; width: auto"/>
+            {/if}
+          {botInfo?.name}
         </a>
       </h1>
 
@@ -15,7 +15,7 @@
         <div class="col">
           <ul class="navbar-nav">
             <li class="nav-item">
-              <a class="nav-link" href="/">
+              <a class="nav-link" href="/#/">
                 <span class="nav-link-title"> Пользователи </span>
               </a>
             </li>
@@ -87,7 +87,17 @@
     import Router from "svelte-spa-router";
 
     import {currentUser} from "@/store/user";
-    import {getUserPhoto} from "@/lib/common";
+    import {getUserPhoto, log} from "@/lib/common";
 
     import {wrap} from 'svelte-spa-router/wrap'
+    import api from "@/lib/api";
+
+    let botInfo = $state()
+
+    api.getBotInfo().then(a=>{
+      botInfo = a
+      log(botInfo)
+      document.title = botInfo.name
+    })
+
 </script>

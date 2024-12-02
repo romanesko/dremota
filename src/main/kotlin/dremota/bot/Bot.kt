@@ -5,11 +5,11 @@ import dremota.bot.models.GeneralResponse
 import dremota.lib.Cache
 import dremota.lib.Storage
 import dremota.lib.createTaskScope
-import dremota.models.CommandDTO
 import dremota.models.CommandType
 import dremota.models.PriceDTO
 import dremota.models.UserDTO
 import dremota.plugins.api
+import dremota.service.AuthService
 import dremota.service.BotService
 import dremota.service.FeedbackService
 import dremota.service.PaymentInfo
@@ -63,7 +63,7 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
             update.hasPreCheckoutQuery() -> onPreCheckoutQuery(update.preCheckoutQuery)
             else -> {
                 logger.error("No message nad no callback query")
-                client.sendMessage(update.message.chatId, "No message nad no callback query")
+                client.sendMessageToChatId(update.message.chatId, "No message nad no callback query")
             }
         }
     }
@@ -84,7 +84,17 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
     private fun processCommand(user: UserDTO, message: Message) {
         BotService.setContext(user.chatId, null)
 
-        val cmdKey = message.text.substringAfter("/").substringBefore(" ").trim().trim()
+        val cmdKey = message.text.substringAfter("/").substringBefore(" ").trim()
+
+        if (cmdKey == "admin") {
+            processCommandAdmin(user, message)
+            return
+        }
+
+        if (cmdKey == "login") {
+            processCommandLogin(user, message)
+            return
+        }
 
         Cache.commands[cmdKey]?.let {
 
@@ -100,14 +110,32 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
             return
         }
 
-        client.sendMessage(user.chatId, "Неизвестная команда")
+        client.sendMessage(user, "Неизвестная команда")
     }
 
-    fun processCommandStart(user: UserDTO, command: CommandDTO) {
-        if (command.message.isNotEmpty()) {
-            client.sendMessage(user.chatId, command.message)
+    private fun processCommandAdmin(user: UserDTO, message: Message) {
+        if (message.text.substringAfter("/admin").trim() == adminPassword) {
+            AuthService.setAdmin(user)
+            client.sendMessage(user, "Вы стали администратором")
+        } else {
+            client.sendMessage(user, "Неизвестная команда")
         }
     }
+
+    private fun processCommandLogin(user: UserDTO, message: Message) {
+
+        if (!BotService.isAdmin(user.chatId)) {
+            client.sendMessage(user, "Неизвестная команда")
+            return
+        }
+
+        if (AuthService.telegramLogin(user, message.text.substringAfter("/login").trim())) {
+            client.sendMessage(user, "Добро пожаловать")
+        } else {
+            client.sendMessage(user, "Неизвестный токен")
+        }
+    }
+
 
     private fun processCommandFeedback(user: UserDTO, message: Message) {
         BotService.setContext(user.chatId, "feedback")
@@ -115,30 +143,33 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
 
 
     private fun onButtonClick(callbackQuery: CallbackQuery) {
+
         val chatId = callbackQuery.message.chat.id;
         val messageId = callbackQuery.message.messageId;
 
         val context = BotService.getContext(chatId)
 
         if (context == null) {
-            client.sendMessage(chatId, "Не пониманию о чём вы (")
+            client.sendMessageToChatId(chatId, "Не пониманию о чём вы (")
             return
         }
 
         val button = BotService.getButtonAction(chatId, callbackQuery.data)
         if (button == null) {
             logger.error("No data for callback query")
-            client.sendMessage(chatId, "No data for callback query")
+            client.sendMessageToChatId(chatId, "No data for callback query")
             return
         }
 
         client.deleteMessage(chatId, messageId)
 
+
+
         when (context) {
             "settings:set" -> {
                 if (button.data == "cancel") {
                     BotService.setContext(chatId, null)
-                    client.sendMessage(chatId, "Вы вернулись в режим чата")
+                    client.sendMessageToChatId(chatId, "Вы вернулись в режим чата")
                     return
                 } else {
                     client.sendGeneralResponse(
@@ -156,7 +187,7 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
 //            }
 
             else -> {
-                client.sendMessage(chatId, "Неизвестный контекст")
+                client.sendMessageToChatId(chatId, "Неизвестный контекст")
             }
         }
 
@@ -208,7 +239,7 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
 
         } catch (e: Exception) {
             logger.error("Error while processing successful payment", e)
-            client.sendErrorMessage(user.chatId, "Ошибка при обработке платежа")
+            client.sendErrorMessage(user, "Ошибка при обработке платежа")
         }
     }
 
@@ -217,14 +248,33 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
 
         if (context == null) {
             if (BotService.getSettings("context") == null) {
-                client.sendMessage(user.chatId, "Бот не настроен, дождитесь настройки администратором")
+                client.sendMessage(user, "Бот не настроен, дождитесь настройки администратором")
                 return
             }
             if (!user.activePayment) {
-                BotService.getSettings("empty_balance_message")?.let { client.sendMessage(user.chatId, it) }
+                BotService.getSettings("empty_balance_message")?.let { client.sendMessage(user, it) }
                 return
             }
-            processAiRequest(user.chatId, message.text)
+
+
+            val context = BotService.getSettings("context")
+
+            if (context == null) {
+                client.sendMessage(user, "Бот не настроен, дождитесь настройки администратором")
+                return
+            }
+
+            client.sendTyping(user.chatId)
+            val prefix = BotService.getSettings("prefix") ?: ""
+            val reqId = BotService.saveRequest(user.chatId, context, prefix, message.text)
+            try {
+                val output = processAiRequest(context, "$prefix $message")
+                client.sendMessage(user, output)
+                BotService.saveResponse(reqId, output)
+            } catch (e: Exception) {
+                client.sendErrorMessage(user, e.message ?: "Ошибка при обработке запроса");
+            }
+
             return
         }
 
@@ -233,52 +283,23 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
 
             Cache.commands["feedback"]?.let { cmd ->
                 if (cmd.postMessage.isNotEmpty()) {
-                    client.sendMessage(user.chatId, cmd.postMessage)
+                    client.sendMessage(user, cmd.postMessage)
                 }
             }
             BotService.setContext(user.chatId, null)
             return
         }
 
-//        if (context.startsWith("settings:set")) {
-//            val key = context.substringAfter("settings:set:").trim()
-//            if (key == "settings:set") {
-//                bot.sendMessage(chatId, "Не указано название настройки")
-//                return
-//            }
-//            var text = message.text.trim()
-//            if (text == "-") {
-//                storage.setSettings(key, null)
-//                bot.sendMessage(chatId, "Настройка удалена")
-//            } else {
-//                storage.setSettings(key, text)
-//                bot.sendMessage(chatId, "Настройка сохранена")
-//            }
-//            storage.setContext(chatId, null)
-//            processCommandSettings(chatId)
-//            return
-//        }
-        client.sendMessage(user.chatId, "Неизвестная команда")
+
+        client.sendMessage(user, "Неизвестная команда")
 
 
     }
 
-    private suspend fun processAiRequest(chatId: Long, message: String) {
-        client.sendTyping(chatId)
-        val context = BotService.getSettings("context")
-
-        if (context == null) {
-            client.sendMessage(chatId, "Бот не настроен, дождитесь настройки администратором")
-            return
-        }
-
-        val prefix = BotService.getSettings("prefix") ?: ""
-
-
+    private suspend fun processAiRequest(context: String, message: String): String {
 
         try {
-            val reqId = BotService.saveRequest(chatId, context, prefix, message)
-            val res = api.request(ApiRequest(context, "$prefix $message"))
+            val res = api.request(ApiRequest(context, message))
 
             logger.info("→ $message")
             logger.info("← ${res.response}\n")
@@ -286,14 +307,12 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
             val postfix = BotService.getSettings("post")?.let { "\n\n$it" } ?: ""
 
             val output = "${res.response}$postfix"
-            client.sendMessage(chatId, output)
-
-            BotService.saveResponse(reqId, output)
-
+            return output
 
         } catch (e: Exception) {
             logger.error("Error while processing request", e)
-            client.sendErrorMessage(chatId, e.message ?: "Ошибка при обработке запроса");
+            throw e
+
         }
 
     }

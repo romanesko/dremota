@@ -1,5 +1,6 @@
 import {writable} from 'svelte/store';
 import {log} from "@/lib/common";
+import api from "@/lib/api";
 
 export const auth_token = writable('');
 
@@ -33,14 +34,18 @@ function eraseCookie(name: string) {
 function getCookieValue(cookieName: string) {
   // Split document.cookie into individual cookies
   const cookies = document.cookie.split("; ");
+  log("Getting cookie", cookieName)
 
   // Loop through cookies to find the one with the specified name
   for (const cookie of cookies) {
     const [name, value] = cookie.split("=");
     if (name === cookieName) {
+      log("Found cookie",cookieName,"with value", value)
       return decodeURIComponent(value);
     }
   }
+
+  log("Cookie", cookieName, "not found")
 
   // Return null if the cookie is not found
   return null;
@@ -50,5 +55,6 @@ function getCookieValue(cookieName: string) {
 
 const token = getCookieValue('token');
 if (token) {
+  api.setToken(token);
   auth_token.set(token);
 }

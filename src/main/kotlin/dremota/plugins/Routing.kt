@@ -33,10 +33,13 @@ fun Application.configureRouting() {
             call.respond(HttpStatusCode.OK)
         }
         staticResources("/", "static")
-        staticFiles("/images", File("src/main/resources/images"))
+        staticFiles("/images", File("static/images"))
 //        staticResources("/images", "images")
 
-        post("/tgauth") { AuthController.auth(call) }
+//        post("/tgauth") { AuthController.auth(call) }
+        post("/auth/code") { AuthController.generateCode(call) }
+        post("/auth/check") { AuthController.checkUserLoggedIn(call) }
+
         authenticate("auth-bearer") {
             route("/api") {
                 get("/status") { call.respond(mapOf("status" to "OK")) }
@@ -67,6 +70,7 @@ fun Application.configureRouting() {
                 route("/settings") {
                     get { SettingsController.getAll(call) }
                     post { SettingsController.updateSettings(call) }
+                    get("/botInfo") { SettingsController.getBotInfo(call) }
                     route("/commands") {
                         get { CommandsController.getAll(call) }
                         put { CommandsController.updateCommand(call) }
@@ -77,6 +81,7 @@ fun Application.configureRouting() {
                         }
                         post("/delete") { CommandsController.deleteCommand(call) }
                     }
+
                     route("/price") {
                         get { PriceController.getAll(call) }
                         post { PriceController.update(call) }

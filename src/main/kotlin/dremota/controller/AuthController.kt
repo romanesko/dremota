@@ -1,5 +1,6 @@
 package dremota.controller
 
+import dremota.models.AuthCodeDTO
 import dremota.service.AuthService
 import dremota.service.UsersService
 import io.ktor.http.*
@@ -7,8 +8,10 @@ import io.ktor.server.application.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
+import io.ktor.server.routing.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import java.util.*
 
 
 @Serializable
@@ -27,6 +30,10 @@ data class TgAuthRequest(
 )
 
 
+@Serializable
+data class AuthState(val token: String?)
+
+
 object AuthController {
 
     suspend fun auth(call: ApplicationCall) {
@@ -40,6 +47,10 @@ object AuthController {
 
         val user = UsersService.getUser(req.id)?: throw BadRequestException("User not found")
 
+        if (!AuthService.isAdmin(user.chatId)){
+            call.respondText("Not admin", status = HttpStatusCode.Unauthorized)
+            return
+        }
         val token = AuthService.updateToken(user)
 
         call.response.cookies.append(
@@ -52,6 +63,14 @@ object AuthController {
         )
 
         call.respond(mapOf("token" to token))
+    }
+
+   suspend fun generateCode(call: RoutingCall) {
+        call.respond(AuthService.generateCode())
+    }
+
+    suspend fun checkUserLoggedIn(call: RoutingCall) {
+        call.respond(AuthService.checkUserLoggedIn(call.receive<AuthCodeDTO>()))
     }
 }
 

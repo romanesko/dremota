@@ -37,11 +37,11 @@ class Client(val telegramClient: TelegramClient,val botToken: String) {
     private val logger: Logger = LoggerFactory.getLogger("tgClient")
 
 
-    fun sendErrorMessage(chatId: Long, error: String) {
-        if (BotService.isAdmin(chatId)) {
-            sendMessage(chatId, error)
+    fun sendErrorMessage(user: UserDTO, error: String) {
+        if (BotService.isAdmin(user.chatId)) {
+            sendMessage(user, error)
         } else {
-            sendMessage(chatId, "Ошибка при обработке запроса, мы уже разбираемся с этим")
+            sendMessage(user, "Ошибка при обработке запроса, мы уже разбираемся с этим")
         }
     }
 
@@ -91,12 +91,12 @@ class Client(val telegramClient: TelegramClient,val botToken: String) {
 
     fun sendMessage(user: UserDTO, message: String, markup: InlineKeyboardMarkup? = null): String {
         return processTemplate(message, user).also { msg ->
-            sendMessage(user.chatId, msg, markup)
+            sendMessageToChatId(user.chatId, msg, markup)
         }
 
     }
 
-    fun sendMessage(chatId: Long, message: String, markup: InlineKeyboardMarkup? = null) {
+    fun sendMessageToChatId(chatId: Long, message: String, markup: InlineKeyboardMarkup? = null) {
         val msg = sm(chatId.toString(), message)
 
         if (markup != null) {
@@ -145,13 +145,14 @@ class Client(val telegramClient: TelegramClient,val botToken: String) {
         return buttonRows
     }
 
+    @Deprecated("Не актуально в версии с управлением через интерфейс")
     fun sendGeneralResponse(chatId: Long, generalResponse: GeneralResponse) {
         BotService.setContext(chatId, generalResponse.context)
 
         for (msg in (generalResponse.telegramMessages ?: emptyList())) {
 
             if (msg.images.isNullOrEmpty()) {
-                sendMessage(chatId, msg.text)
+                sendMessageToChatId(chatId, msg.text)
             } else {
                 sendMediaMessage(chatId, msg.images, msg.text)
             }
@@ -162,7 +163,7 @@ class Client(val telegramClient: TelegramClient,val botToken: String) {
 
         if (buttonRows.isNotEmpty()) {
             val buttonsHeader = generalResponse.buttonsHeader ?: "Выберите действие:"
-            sendMessage(chatId, buttonsHeader, InlineKeyboardMarkup(buttonRows))
+            sendMessageToChatId(chatId, buttonsHeader, InlineKeyboardMarkup(buttonRows))
         }
     }
 

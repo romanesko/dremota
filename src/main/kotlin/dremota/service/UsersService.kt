@@ -63,10 +63,7 @@ object UsersService {
         return AuthService.isAdmin(chatId)
     }
 
-    fun setAdmin(chatId: Long) {
-        AuthService.setAdmin(chatId)
 
-    }
 
     fun getUser(id: Long): UserDTO? {
         return Db.usersQueries.selectById(id).executeAsOneOrNull()?.toDTO()

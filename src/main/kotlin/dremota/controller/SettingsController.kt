@@ -6,6 +6,9 @@ import io.ktor.server.application.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 
+
+
+
 object SettingsController {
     suspend fun getAll(call: ApplicationCall) {
         call.respond(SettingsService.getSettings())
@@ -14,5 +17,9 @@ object SettingsController {
         val settings = call.receive<SettingsDTO>()
         SettingsService.updateSettings(settings)
         call.respond(mapOf("status" to "ok"))
+    }
+
+    suspend fun getBotInfo(call: ApplicationCall) {
+        call.respond(SettingsService.getBotInfo())
     }
 }
