@@ -268,7 +268,7 @@ class Bot(val client: Client, private val adminPassword: String) : LongPollingSi
             val prefix = BotService.getSettings("prefix") ?: ""
             val reqId = BotService.saveRequest(user.chatId, context, prefix, message.text)
             try {
-                val output = processAiRequest(context, "$prefix $message")
+                val output = processAiRequest(context, "$prefix ${message.text}")
                 client.sendMessage(user, output)
                 BotService.saveResponse(reqId, output)
             } catch (e: Exception) {
